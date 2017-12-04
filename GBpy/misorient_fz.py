@@ -1,17 +1,12 @@
 # Authors: Arash Dehghan Banadaki <adehgha@ncsu.edu>, Srikanth Patala <spatala@ncsu.edu>
-# Copyright (c) 2015,  Arash Dehghan Banadaki and Srikanth Patala.
+# Copyright (c) 2014,  Arash Dehghan Banadaki and Srikanth Patala.
 # License: GNU-GPL Style.
-# How to cite GBpy:
-# Banadaki, A. D. & Patala, S. "An efficient algorithm for computing the primitive bases of a general lattice plane",
-# Journal of Applied Crystallography 48, 585-588 (2015). doi:10.1107/S1600576715004446
-
 
 import numpy as np
 import sys
 import pickle
 import os
 import quaternion as quat
-# -----------------------------------------------------------------------------------------------------------
 
 
 def check_cond(g, cryst_ptgrp, tol):
@@ -19,18 +14,18 @@ def check_cond(g, cryst_ptgrp, tol):
     Parameters
     ----------------
     g: quaternion object
-        Misorientation
+    Misorientation
 
     cryst_ptgrp: string
-        Crystallogrphic point group in Schoenflies notation
+    Crystallogrphic point group in Schoenflies notation
 
     tol: float
-        Tolerance for the misorientation to belong in the fundamental zone
+    Tolerance for the misorientation to belong in the fundamental zone
 
     Returns
     ------------
-    True or False: Boolean
-        Depending on whether or not the misorientation is a disorientation
+    True or False
+    Depending on whether or not the misorientation is a disorientation
     """
 
     q0 = quat.getq0(g)
@@ -111,9 +106,10 @@ def check_cond(g, cryst_ptgrp, tol):
             cond6 = q2 - (np.sqrt(2)+1)*q3 <= tol
         if cond1 and cond2 and cond3 and cond4 and cond5 and cond6:
             return True
-# ------------------------------------------------------------------------------------------------------
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
+# Misorientation Fundamental Zone Quaternions
 def misorient_fz(misquats, cryst_ptgrp, tol=1e-12):
     """
     The function takes as input the misorientations and the corresponding
@@ -123,18 +119,18 @@ def misorient_fz(misquats, cryst_ptgrp, tol=1e-12):
     Parameters
     ----------
     misquats: Quaternion class
-        Quaternion misorientations
+    Quaternion misorientations
 
     cryst_ptgrp: string
-        Crystallogrphic point group in Schoenflies notation
+    Crystallogrphic point group in Schoenflies notation
 
     tol: float
-        Tolerance for the disorientation to belong in the fundamental zone
+    Tolerance for the disorientation to belong in the fundamental zone
 
     Returns
     -------
     disquats: quaternion class
-        Disorientations for the given misorientations
+    Disorientations for the given misorientations
     """
 
     file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -145,7 +141,7 @@ def misorient_fz(misquats, cryst_ptgrp, tol=1e-12):
     if misquats.ndim == 1:
         misquats = np.reshape(misquats, (5, 1))
 
-    disquats = quat.Quaternion(np.zeros(np.shape(misquats)))
+    disquats = quat.quaternion(np.zeros(np.shape(misquats)))
     disquats[:] = np.NaN
 
     msz = quat.get_size(misquats)
@@ -158,10 +154,10 @@ def misorient_fz(misquats, cryst_ptgrp, tol=1e-12):
             for k in range(symm_sz):
                 tsymm_q2 = quat.mtimes(symm_quat[:, k], tsymm_q1)
 
-                tqn1 = quat.Quaternion(np.copy(tsymm_q2))
+                tqn1 = quat.quaternion(np.copy(tsymm_q2))
                 tqn2 = quat.antipodal(tsymm_q2)
-                tqn3 = quat.inverse(tsymm_q2)
-                tqn4 = quat.inverse(quat.antipodal(tsymm_q2))
+                tqn3 = quat.ctranspose(tsymm_q2)
+                tqn4 = quat.ctranspose(quat.antipodal(tsymm_q2))
 
                 if check_cond(tqn1, cryst_ptgrp, tol):
                     tcheck = 1
@@ -185,4 +181,3 @@ def misorient_fz(misquats, cryst_ptgrp, tol=1e-12):
         if tcheck == 0:
             raise Exception('FZ Quaternion not found')
     return disquats
-# ------------------------------------------------------------------------------------------------------

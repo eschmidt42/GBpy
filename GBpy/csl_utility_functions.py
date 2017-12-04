@@ -1,18 +1,18 @@
 # Authors: Arash Dehghan Banadaki <adehgha@ncsu.edu>, Srikanth Patala <spatala@ncsu.edu>
-# Copyright (c) 2015,  Arash Dehghan Banadaki and Srikanth Patala.
+# Copyright (c) 2014,  Arash Dehghan Banadaki and Srikanth Patala.
 # License: GNU-GPL Style.
-# How to cite GBpy:
-# Banadaki, A. D. & Patala, S. "An efficient algorithm for computing the primitive bases of a general lattice plane",
-# Journal of Applied Crystallography 48, 585-588 (2015). doi:10.1107/S1600576715004446
-
 
 import numpy as np
-# import sys
-# import os
+import sys
+import os
 import integer_manipulations as int_man
 import misorient_fz as mis_fz
-import tools as trans
-# -----------------------------------------------------------------------------------------------------------
+import quaternion as quat
+import tools.transformations as trans
+import tools.unique_rows_tol as unq_tol
+
+#################################################
+#################################################
 
 
 def proper_ptgrp(cryst_ptgrp):
@@ -23,12 +23,12 @@ def proper_ptgrp(cryst_ptgrp):
     Parameters
     ----------------
     cryst_ptgrp: string
-        Crystallogrphic point group in Schoenflies notation
+    Crystallogrphic point group in Schoenflies notation
 
     Returns
     ----------
     proper_ptgrp: string
-        Proper point group in Schoenflies notation
+    Proper point group in Schoenflies notation
     """
     if cryst_ptgrp in ['D3', 'D3d']:
         proper_ptgrp = 'D3'
@@ -50,7 +50,8 @@ def proper_ptgrp(cryst_ptgrp):
     #     proper_ptgrp = cryst_ptgrp
 
     return proper_ptgrp
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
 
 
 def largest_odd_factor(var_arr):
@@ -60,12 +61,12 @@ def largest_odd_factor(var_arr):
     Parameters
     -----------------
     var_arr: numpy array
-        Array of integers whose largest odd factors needs to be computed
+    Array of integers whose largest odd factors needs to be computed
 
     Returns
     ------------
     odd_d: numpy array
-        Array of largest odd factors of each integer in var_arr
+    Array of largest odd factors of each integer in var_arr
     """
     if var_arr.ndim == 1:
         odd_d = np.empty(np.shape(var_arr))
@@ -81,7 +82,8 @@ def largest_odd_factor(var_arr):
         return odd_d
     else:
         raise Exception('Wrong Input Type')
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
 
 
 def compute_inp_params(lattice, sig_type):
@@ -92,17 +94,15 @@ def compute_inp_params(lattice, sig_type):
     Parameters
     ----------------
     lattice: Lattice class
-        Attributes of the underlying lattice
+    Attributes of the underlying lattice
 
     sig_type: {'common', 'specific'}
 
     Returns
     -----------
-    tau: float
-        tau is a rational number :math:`= \\frac{\\nu}{\\mu}`
-
-    kmax: float
-        kmax is an integer that depends on :math:`\\mu \\ , \\nu`
+    tau, kmax: floats
+    tau is a rational number $= \frac{nu}{mu}$
+    kmax is an integer that depends on $\mu$ and $\nu$
     """
     lat_params = lattice.lat_params
     cryst_ptgrp = proper_ptgrp(lattice.cryst_ptgrp)
@@ -144,7 +144,8 @@ def compute_inp_params(lattice, sig_type):
         kmax = []
 
     return tau, kmax
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
 
 
 def mesh_muvw(cryst_ptgrp, sigma, sig_type, *args):
@@ -155,10 +156,10 @@ def mesh_muvw(cryst_ptgrp, sigma, sig_type, *args):
     Parameters
     ----------------
     cryst_ptgrp: string
-        Proper point group in Schoenflies notation
+    Proper point group in Schoenflies notation
 
     sigma: integer
-        Sigma number
+    Sigma number
 
     sig_type: {'common', 'specific'}
 
@@ -256,8 +257,9 @@ def mesh_muvw(cryst_ptgrp, sigma, sig_type, *args):
     x3 = x3.ravel()
     x4 = x4.ravel()
 
-    return np.vstack((x1, x2, x3, x4)).astype(dtype='int64')
-# -----------------------------------------------------------------------------------------------------------
+    return np.vstack((x1, x2, x3, x4)).astype(int)
+#################################################
+#################################################
 
 
 def mesh_muvw_fz(quad_int, cryst_ptgrp, sig_type, *args):
@@ -268,10 +270,10 @@ def mesh_muvw_fz(quad_int, cryst_ptgrp, sig_type, *args):
     Parameters
     ----------------
     quad_int: numpy array
-        Integer quadruples
+    Integer quadruples
 
     cryst_ptgrp: string
-        Proper point group in Schoenflies notation
+    Proper point group in Schoenflies notation
 
     sig_type: {'common', 'specific'}
 
@@ -354,7 +356,9 @@ def mesh_muvw_fz(quad_int, cryst_ptgrp, sig_type, *args):
             w = w[condfin]
 
         return np.vstack((m, u, v, w))
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
+
 
 def check_fsig_int(quad_int, cryst_ptgrp, sigma, *args):
     """
@@ -366,13 +370,13 @@ def check_fsig_int(quad_int, cryst_ptgrp, sigma, *args):
     Parameters
     ----------------
     quad_int: numpy array
-        Integer quadruples
+    Integer quadruples
 
     cryst_ptgrp: string
-        Proper point group in Schoenflies notation
+    Proper point group in Schoenflies notation
 
     sigma: float
-        sigma number
+    sigma number
 
     args[0]: dictionary
     keys: 'nu', 'mu', 'kmax'
@@ -423,7 +427,9 @@ def check_fsig_int(quad_int, cryst_ptgrp, sigma, *args):
         quad_int = quad_int[:, cond1[cond2]]
 
     return quad_int
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
+
 
 def eliminate_idrots(quad_int):
     """
@@ -444,7 +450,9 @@ def eliminate_idrots(quad_int):
     quad_int = np.delete(quad_int, np.where(condfin), axis=1)
 
     return quad_int
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
+
 
 def sigtype_muvw(quad_int, cryst_ptgrp, sig_type):
     """
@@ -457,17 +465,17 @@ def sigtype_muvw(quad_int, cryst_ptgrp, sig_type):
     Parameters
     ----------------
     quad_int: numpy array
-        Integer quadruples.
+    Integer quadruples
 
     cryst_ptgrp: string
-        Proper point group in Schoenflies notation.
+    Proper point group in Schoenflies notation
 
     sig_type: {'common', 'specific'}
 
     Returns
     -----------
     quad_int: numpy array
-        Integer quadruple array that satisfy the above mentioned condition.
+    Integer quadruple array that satisfy the above mentioned condition
     """
 
     m = quad_int[0, :]
@@ -493,14 +501,16 @@ def sigtype_muvw(quad_int, cryst_ptgrp, sig_type):
         condfin = ~condfin
 
     return quad_int[:, condfin]
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
+
 
 def eliminate_mults(quad_int):
     """
     Divide all the integer quadruples by their corresponding least common
     multiples and return the unique set of integer quadruples
     """
-    quad_gcd = int_man.gcd_array(quad_int.astype(dtype='int64'), 'columns')
+    quad_gcd = int_man.gcd_array(quad_int.astype(int), 'columns')
     quad_gcd = np.tile(quad_gcd, (4, 1))
 
     a = quad_int / quad_gcd
@@ -511,7 +521,9 @@ def eliminate_mults(quad_int):
     quad_int = quad_int.transpose()
 
     return quad_int
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
+
 
 def check_sigma(quad_int, sigma, cryst_ptgrp, sig_type, *args):
     """
@@ -524,10 +536,10 @@ def check_sigma(quad_int, sigma, cryst_ptgrp, sig_type, *args):
     Parameters
     ----------------
     quad_int: numpy array
-        Integer quadruples.
+    Integer quadruples
 
     cryst_ptgrp: string
-        Proper point group in Schoenflies notation.
+    Proper point group in Schoenflies notation
 
     sig_type: {'common', 'specific'}
 
@@ -537,7 +549,7 @@ def check_sigma(quad_int, sigma, cryst_ptgrp, sig_type, *args):
     Returns
     -----------
     quad_int: numpy array
-        Integer quadruple array that satisfy the above mentioned condition.
+    Integer quadruple array that satisfy the above mentioned condition
 
     See Also
     -----------
@@ -761,7 +773,9 @@ def check_sigma(quad_int, sigma, cryst_ptgrp, sig_type, *args):
             return quad_int_out
     else:
         raise Exception('sig_type: wrong input type')
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
+
 
 def gcd1d_arr(arr_tup):
     """
@@ -771,24 +785,26 @@ def gcd1d_arr(arr_tup):
     Parameters
     ---------------
     arr_tup: tuple
-        one-D arrays of integers of equal size.
+    one-D arrays of integers of equal size
 
     Returns
     -----------
     GCD of rows of 1D arrays of integers
     """
     asz = len(arr_tup)
-    gc1 = arr_tup[0].astype(dtype='int64')
+    gc1 = arr_tup[0].astype(int)
     for ct1 in range(asz - 1):
         gc1 = np.copy(np.column_stack((gc1,
-                                       arr_tup[ct1+1].astype(dtype='int64'))))
+                                       arr_tup[ct1+1].astype(int))))
 
     if gc1.ndim == 1:
         gc1 = np.reshape(gc1, (1, np.size(gc1)))
 
     t1 = int_man.gcd_array(gc1, 'rows')
     return np.reshape(t1, (np.size(t1), ))
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
+
 
 def compute_tmat(quad_int, tau, lat_type):
     """
@@ -799,18 +815,18 @@ def compute_tmat(quad_int, tau, lat_type):
     Parameters
     ------------------
     quad_int: numpy array
-        Integer quadruples.
+    Integer quadruples
 
     tau: float
-        :math:`\\frac{\\nu}{\\mu}`
+    nu/mu
 
     lat_type: Lattice class
-        Attributes of the underlying lattice
+    Attributes of the underlying lattice
 
     Returns
     ----------
     g : numpy array
-        dimension = 3, n x 3 x  3 transformation matrices
+    dimension = 3, n x 3 x  3 transformation matrices
     """
     m = quad_int[0, :].astype(float)
     u = quad_int[1, :].astype(float)
@@ -893,18 +909,20 @@ def compute_tmat(quad_int, tau, lat_type):
         g[:, 2, 1] = 2*(v*w + m*u) / s
 
         if lat_type.pearson == 'cF' or lat_type.pearson == 'cI':
-            l_p_po = lat_type.l_p_po
-            l_go_g = np.linalg.inv(l_p_po)
+            l_g_go = lat_type.l_g_go
+            l_go_g = np.linalg.inv(l_g_go)
             for i in range(np.shape(g)[0]):
-                g[i, :, :] = np.dot(np.dot(l_go_g, g[i, :, :]), l_p_po)
+                g[i, :, :] = np.dot(np.dot(l_go_g, g[i, :, :]), l_g_go)
 
     if sz == 1:
         g = g.reshape((3, 3))
 
     return g
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
 
-def disorient_sigmarots(r_g1tog2_g1, l_p_po, cryst_ptgrp):
+
+def disorient_sigmarots(r_g1tog2_g1, l_g_go, cryst_ptgrp):
     """
     The disorientation corresponding to each rotation matrix is computed
     and the unique set is returned
@@ -912,24 +930,24 @@ def disorient_sigmarots(r_g1tog2_g1, l_p_po, cryst_ptgrp):
     Parameters
     ----------------
     r_g1tog2_g1: numpy array (n x 3 x 3)
-        Transformation matrices in g1 reference frame
+    Transformation matrices in g1 reference frame
 
-    l_p_po: numpy array
-        The primitive basis vectors of the underlying lattice in the orthogonal
-        reference frame.
+    l_g_go: numpy array
+    The primitive basis vectors of the underlying lattice in the orthogonal
+    reference frame
 
     cryst_ptgrp: string
-        Proper point group in Schoenflies notation
+    Proper point group in Schoenflies notation
 
     Returns
     ----------
     rots_g1tog2_g1: numpy array (n x 3 x 3)
-        Transformation matrices in g1 reference frame in the fundamental zone
+    Transformation matrices in g1 reference frame in the fundamental zone
     """
     if r_g1tog2_g1.ndim == 2:
         r_g1tog2_g1 = np.reshape(r_g1tog2_g1, (1, 3, 3))
 
-    l_go_g = np.linalg.inv(l_p_po)
+    l_go_g = np.linalg.inv(l_g_go)
     msz = np.shape(r_g1tog2_g1)[0]
 
     r_go1togo2_go1 = np.zeros(np.shape(r_g1tog2_g1))
@@ -937,15 +955,14 @@ def disorient_sigmarots(r_g1tog2_g1, l_p_po, cryst_ptgrp):
 
     for i in range(msz):
         r_go1togo2_go1[i, :, :] = np.dot(
-            np.dot(l_p_po, r_g1tog2_g1[i, :, :]), l_go_g)
+            np.dot(l_g_go, r_g1tog2_g1[i, :, :]), l_go_g)
 
     q_go1togo2_go1 = trans.mat2quat(r_go1togo2_go1)
     qfz_go1togo2_go1 = mis_fz.misorient_fz(q_go1togo2_go1, cryst_ptgrp)
 
-    # qt1 = quat.double(qfz_go1togo2_go1)
-    qt1 = np.array(qfz_go1togo2_go1)
+    qt1 = quat.double(qfz_go1togo2_go1)
     qt1 = qt1.transpose()
-    [t1, ia] = trans.unique_rows_tol(qt1, 1e-06, True)
+    [t1, ia] = unq_tol.unique_rows_tol(qt1, 1e-06, True)
 
     # Change rotations to the fundamental zone
     rots_g1tog2_g1 = np.zeros((np.size(ia), 3, 3))
@@ -954,14 +971,16 @@ def disorient_sigmarots(r_g1tog2_g1, l_p_po, cryst_ptgrp):
     for ct1 in range(np.size(ia)):
         if abs(abs(qfz_go1togo2_go1[:, ia[ct1]][0])-1) > 1e-10:
             mat1 = trans.quat2mat(qfz_go1togo2_go1[:, ia[ct1]])
-            rots_g1tog2_g1[ct2, :, :] = np.dot(np.dot(l_go_g, mat1), l_p_po)
+            rots_g1tog2_g1[ct2, :, :] = np.dot(np.dot(l_go_g, mat1), l_g_go)
             ct2 += 1
 
     if ct2 == 0:
         return np.zeros(0)
     else:
         return rots_g1tog2_g1
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
+
 
 def check_sigma_rots(r_g1tog2_g1, sigma):
     """
@@ -973,18 +992,16 @@ def check_sigma_rots(r_g1tog2_g1, sigma):
     Parameters
     ----------------
     r_g1tog2_g1: numpy array (n x 3 x 3)
-        Transformation matrices in g1 reference frame
+    Transformation matrices in g1 reference frame
 
     sigma: float
-        sigma number
+    sigma number
 
     Returns
     ----------
     {'N': rots_n, 'D': rots_d}: dictionary
-    rots_n: numpy array
-        numerator matrices n x 3 x3
-    rots_d: numpy array
-        denominator matrices n x 3 x3
+    rots_n: numpy array numerator matrices n x 3 x3
+    rots_d: numpy array denominator matrices n x 3 x3
     """
     rots_n = np.zeros(np.shape(r_g1tog2_g1))
     rots_d = np.zeros(np.shape(r_g1tog2_g1))
@@ -1012,7 +1029,9 @@ def check_sigma_rots(r_g1tog2_g1, sigma):
         raise Exception('Not a sigma rotation')
 
     return {'N': rots_n, 'D': rots_d}
-# -----------------------------------------------------------------------------------------------------------
+#################################################
+#################################################
+
 
 def csl_rotations(sigma, sig_type, lat_type):
     """
@@ -1022,22 +1041,22 @@ def csl_rotations(sigma, sig_type, lat_type):
     Parameters
     ----------
     sigma : int
-        Sigma corresponding to the transformation matrix
+    Sigma corresponding to the transformation matrix
 
     sig_type: {'common', 'specific'}
-        If the sigma generating function depends on the lattice type, then
-        sig_type is 'specific', otherwise it is 'common'
+    If the sigma generating function depends on the lattice type, then
+    sig_type is 'specific', otherwise it is 'common'
 
     lat_type: Lattice class
-        Attributes of the underlying lattice
+    Attributes of the underlying lattice
 
     Returns
     -------
     sig_rots: dictionary
     keys: 'N', 'D'
     sig_rots['N'], sig_rots['D']: Numerator and Integer matrices
-        The transformation matrix is N/D in the g1 reference frame
-        (i.e. r_g1tog2_g1)
+    The transformation matrix is N/D in the g1 reference frame
+    (i.e. r_g1tog2_g1)
 
     Notes
     -------
@@ -1112,10 +1131,10 @@ def csl_rotations(sigma, sig_type, lat_type):
 
     # Compute rotation matrices in G1 lattice
     r_g1tog2_g1 = compute_tmat(quad_int, tau, lat_type)
-    l_p_po = lat_type.l_p_po
+    l_g_go = lat_type.l_g_go
 
     # Convert to disorientations to keep the unique rotations
-    r_g1tog2_g1 = disorient_sigmarots(r_g1tog2_g1, l_p_po, cryst_ptgrp)
+    r_g1tog2_g1 = disorient_sigmarots(r_g1tog2_g1, l_g_go, cryst_ptgrp)
 
     if np.size(r_g1tog2_g1) == 0:
         return {'N': np.empty(0), 'D': np.empty(0)}
@@ -1124,4 +1143,3 @@ def csl_rotations(sigma, sig_type, lat_type):
         # equal to $\Sigman$
         sig_rots = check_sigma_rots(r_g1tog2_g1, sigma)
         return sig_rots
-# -----------------------------------------------------------------------------------------------------------

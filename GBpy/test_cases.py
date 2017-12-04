@@ -1,19 +1,17 @@
 # Authors: Arash Dehghan Banadaki <adehgha@ncsu.edu>, Srikanth Patala <spatala@ncsu.edu>
-# Copyright (c) 2015,  Arash Dehghan Banadaki and Srikanth Patala.
+# Copyright (c) 2014,  Arash Dehghan Banadaki and Srikanth Patala.
 # License: GNU-GPL Style.
-# How to cite GBpy:
-# Banadaki, A. D. & Patala, S. "An efficient algorithm for computing the primitive bases of a general lattice plane",
-# Journal of Applied Crystallography 48, 585-588 (2015). doi:10.1107/S1600576715004446
 
+from __future__ import print_function, division, absolute_import
 
 import numpy as np
-import integer_manipulations as int_man
+import GBpy.integer_manipulations as int_man
 import os
 import sys
-import find_csl_dsc as fcd
-import lattice as lat
-import bp_basis as bpb
-from tools import smith_nf
+import GBpy.find_csl_dsc as fcd
+import GBpy.lattice as lat
+import GBpy.bp_basis as bpb
+from GBpy.tools import smith_nf
 
 
 def test_int_mult():
@@ -28,7 +26,7 @@ def test_int_mult():
     Mat['Matrix'][4] = np.array(([1, 2, 25], [-4, 5, 6], [3, -2, 1e-7]))
     for i in range(Mat.shape[0]):
         a, b = int_man.int_mult(Mat['Matrix'][i])
-        print (Mat['Matrix'][i], '\nIntegral Form: \n',
+        print(Mat['Matrix'][i], '\nIntegral Form: \n',
                b, '\nMultiplier:\n', a, '\n-------\n')
 # -----------------------------------------------------------------------------------------------------------
 
@@ -52,34 +50,33 @@ def test_int_finder():
     Mat['col'][1] = np.array(([1.5e-7], [1], [3e-6]))
     Mat['col'][2] = np.array(([1.5], [4], [3e-7]))
     order = np.zeros(2, 'a4')
-    order[0] = 'rows'
-    order[1] = 'col'
-    # order[2] = 'cols'
+    order = ['rows', 'col']
+    
     cnt = 0
     for j in Mat.dtype.names:
         for i in range(Mat.shape[0]):
             for k in range(len(order)):
                 cnt += 1
-                print 'case:', cnt, '\n'
-                print Mat[j][i], '\n\n', 'order:', order[k], '\nanswer:\n'
+                print('case:', cnt, '\n')
+                print(Mat[j][i], '\n\n', 'order:', order[k], '\nanswer:\n')
 
                 # a = int_man.int_finder(Mat[j][i], tolerance, order[k])
                 a = int_man.int_finder(Mat[j][i])
-                print a, '\n', '--'
-                a = int_man.int_finder(Mat[j][i], 1.0e-5, 'rows', 1.0e-5)
-                print a, '\n', '--'
+                print(a, '\n', '--')
+                a = int_man.int_finder(Mat[j][i], 1.0e-5, 'rows', 1.0e-5) # supposed to fail for cnt == 7?
+                print(a, '\n', '--')
                 a = int_man.int_finder(Mat[j][i], 1e-5, 'rows')
-                print a, '\n', '--'
+                print(a, '\n', '--')
                 a = int_man.int_finder(Mat[j][i], 1e-5, 'col')
-                print a, '\n', '--'
+                print(a, '\n', '--')
                 a = int_man.int_finder(Mat[j][i], 1e-5, 'columns')
-                print a, '\n', '--'
+                print(a, '\n', '--')
                 a = int_man.int_finder(Mat[j][i], 1e-5, order[k], 1e-5)
-                print a, '\n', '--'
+                print(a, '\n', '--')
 
-                print '\n', '-----------------------------------------'
+                print('\n', '-----------------------------------------')
 
-    print cnt, ' test cases have been tried.'
+    print(cnt, ' test cases have been tried.')
     if __name__ == '__main__':
         test_int_finder
         # unittest.main()
@@ -92,11 +89,11 @@ def test_int_check():
     """
     b = np.array([[2, 3, 5], [6, 6.000002, -2.000001], [-0.00002, 1.5, 4]])
     a = int_man.int_check(b)
-    print a
+    print(a)
     # ------------
     b = 2.5
     a = int_man.int_check(b)
-    print a
+    print(a)
     if __name__ == '__main__':
         test_int_check
 
@@ -119,7 +116,7 @@ def test_csl_finder_smith():
     Mat['Matrix'][4] = np.array(([1, 2, 25], [-4, 5, 6], [3, -2, 0]))
     for i in range(Mat.shape[0]):
         a = fcd.csl_finder_smith(Mat['Matrix'][i])
-        print Mat['Matrix'][i], '\n CSL: \n', a, '\n-------\n'
+        print(Mat['Matrix'][i], '\n CSL: \n', a, '\n-------\n')
 # -----------------------------------------------------------------------------------------------------------
 
 
@@ -136,7 +133,7 @@ def test_smith_nf():
     # print (index1)
     # # print min(np.nonzero(D != 0))
     U, S, V = smith_nf(D)
-    print '\n---\nU=\n', U, '\n---\nS=\n', S, '\n---\nV=\n', V
+    print('\n---\nU=\n', U, '\n---\nS=\n', S, '\n---\nV=\n', V)
 # -----------------------------------------------------------------------------------------------------------
 
 
@@ -146,13 +143,13 @@ def test_csl_elem_div_thm_l1():
     """
     import numpy as np
     a = np.array([[2, 3, 0], [4, -2, 7], [0, 2, 8]])
-    print a, '\n'
+    print(a, '\n')
     b = fcd.csl_elem_div_thm_l1(a, 2.5)
-    print b, '\n--------\n'
+    print(b, '\n--------\n')
     a = np.array([[2, 3], [4, -2]])
-    print a, '\n'
+    print(a, '\n')
     b = fcd.csl_elem_div_thm_l1(a, 2.5)
-    print b
+    print(b)
 # -----------------------------------------------------------------------------------------------------------
 
 
@@ -189,13 +186,16 @@ def test_gb_2d_csl():
 
     for i in range(Mat.shape[0]):
         AL = lat.Lattice('Al')
+        print("AL ",AL)
+        print("l_g_go ",AL.l_g_go)
         bp1_go1 = Mat['bp1_go1'][i]
         t_g1tog2_go1 = Mat['t_g1tog2_go1'][i]
-        a, b, c = bpb.bicryst_planar_den(bp1_go1, t_g1tog2_go1, AL)
-        print ('Pl Density 1=', a, '\nPl Density 2=',
+        a, b, c = bpb.bicryst_planar_den(bp1_go1, t_g1tog2_go1, AL, 
+            mat_ref="go1", inds_type="normal_go")
+        print('Pl Density 1=', a, '\nPl Density 2=',
                b, '\nPl Density_2D CSL=', c)
-        print '\n------------\n'
-test_gb_2d_csl()
+        print('\n------------\n')
+#test_gb_2d_csl()
 # -----------------------------------------------------------------------------------------------------------
 
 
@@ -227,7 +227,7 @@ def test_dsc_finder():
 
     for i in range(Mat.shape[0]):
         a = fcd.dsc_finder(Mat['Matrix'][i], L_G1_GO1)
-        print ('\n R_G1ToG2_G1: \n',
+        print('\n R_G1ToG2_G1: \n',
                Mat['Matrix'][i], '\n DSC: \n', a, '\n-------\n')
         # txt=Col()
         # txt.c_prnt('R_G1ToG2_G1', 'yel')

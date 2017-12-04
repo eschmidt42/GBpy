@@ -1,15 +1,17 @@
 # Authors: Arash Dehghan Banadaki <adehgha@ncsu.edu>, Srikanth Patala <spatala@ncsu.edu>
-# Copyright (c) 2015,  Arash Dehghan Banadaki and Srikanth Patala.
+# Copyright (c) 2014,  Arash Dehghan Banadaki and Srikanth Patala.
 # License: GNU-GPL Style.
-# How to cite GBpy:
-# Banadaki, A. D. & Patala, S. "An efficient algorithm for computing the primitive bases of a general lattice plane",
-# Journal of Applied Crystallography 48, 585-588 (2015). doi:10.1107/S1600576715004446
-
 
 import numpy as np
-from fractions import gcd
+# from fractions import gcd
+from math import gcd
 from fractions import Fraction
-# -----------------------------------------------------------------------------------------------------------
+
+def convert_array(x, dtype=np.int64, check=True):
+    assert isinstance(x,np.ndarray), "x is not an array!"
+    _x = np.array(x,dtype=dtype)
+    assert np.allclose(_x,x), "Given x and type cast ({}) of x (_x) diverge! x ({}) is not close to _x ({}).".format(dtype, x.astype(str), _x.astype(str))
+    return _x
 
 def gcd_array(input, order='all'):
     """
@@ -18,14 +20,14 @@ def gcd_array(input, order='all'):
     Parameters
     ----------
     input : numpy array or list of intgers
-        Input n-D array of integers (most suitable for 1D and 2D arrays)
+    Input n-D array of integers (most suitable for 1D and 2D arrays)
 
     order : {'rows', 'columns', 'col', 'all'}, optional
 
     Returns
     -------
     Agcd: numpy array
-        An array of greatest common divisors of the input
+    An array of greatest common divisors of the input
 
     Notes
     -------
@@ -49,9 +51,9 @@ def gcd_array(input, order='all'):
         input = np.reshape(input, (1, input.shape[0]))
 
     # Only integer values are allowed
+    assert input.dtype in (np.int,np.int32,np.int64), "Inputs must be real integers. Given: {}".format(input.dtype)
     # if input.dtype.name != 'int64':
-    if not np.issubdtype(input.dtype, np.int):
-        raise Exception("Inputs must be real integers.")
+    #     raise Exception("Inputs must be real integers.")
 
     err_msg = "Not a valid input. Please choose either \"rows\" " + \
               "or \"columns\" keys for this function."
@@ -84,7 +86,7 @@ def gcd_array(input, order='all'):
         Agcd.shape = (len(Agcd), 1)
 
     return np.absolute(Agcd)
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 
 
 def lcm_vec(a, b):
@@ -95,39 +97,42 @@ def lcm_vec(a, b):
     Parameters
     ----------
     a, b : numpy array
-        Input 1D arrays of integers
+    Input 1D arrays of integers
 
     Returns
     -------
     lcm_vector: numpy array
-        Output 1D array of integers
+    Output 1D array of integers
 
     See Also
     --------
     lcm_arry
 
     """
+    a = convert_array(a, dtype=np.int64, check=True)
+    b = convert_array(b, dtype=np.int64, check=True)
+    
     gcd_vec = np.vectorize(gcd)
     lcm_vector = a * (b / gcd_vec(a, b))
     return lcm_vector
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 
 
-def lcm_array(input, order='all'):
+def lcm_array(_input, order='all'):
     """
     The function computes the LCM of an array of numbers.
 
     Parameters
     ----------
-    input : numpy array or list of intgers
-        Input n-D array of integers (most suitable for 1D and 2D arrays)
+    _input : numpy array or list of intgers
+    Input n-D array of integers (most suitable for 1D and 2D arrays)
 
     order : {'rows', 'columns', 'col', 'all'}, optional
 
     Returns
     -------
     Alcm: numpy array
-        An array of least common multiples of the input
+    An array of least common multiples of the input
 
     Notes
     -------
@@ -140,16 +145,16 @@ def lcm_array(input, order='all'):
     gcd_array
 
     """
-    input = np.array(input)
+    _input = np.array(_input)
     tmp = 0
 
-    if np.ndim(input) == 1:
-        input = np.reshape(input, (1, input.shape[0]))
+    if np.ndim(_input) == 1:
+        _input = np.reshape(_input, (1, _input.shape[0]))
 
     # Only integer values are allowed
+    assert _input.dtype in (np.int,np.int32,np.int64), "Inputs must be real integers. Given: {}".format(input.dtype)
     # if input.dtype.name != 'int64':
-    if not np.issubdtype(input.dtype, np.int):
-        raise Exception("Inputs must be real integers.")
+    #     raise Exception("Inputs must be real integers.")
 
     err_msg = "Not a valid input. Please choose either \"rows\" " + \
               "or \"columns\" keys for this function."
@@ -161,28 +166,28 @@ def lcm_array(input, order='all'):
         raise Exception(err_msg)
 
     if (Keys == 3):
-        Sz = input.shape
-        input = np.reshape(input, (1, Sz[0]*Sz[1]))
+        Sz = _input.shape
+        _input = np.reshape(_input, (1, Sz[0]*Sz[1]))
     if (Keys == 1) or (Keys == 2):
-        input = input.T
-        Alcm = lcm_array(input, 'rows')
+        _input = _input.T
+        Alcm = lcm_array(_input, 'rows')
         # handling the case of asking a column vector
         # with the 'row' key by mistake.
         tmp = 1
 
-    Sz = input.shape
+    Sz = _input.shape
     if Sz[1] == 1:
-        input.shape = (1, Sz[0])
+        _input.shape = (1, Sz[0])
 
-    Alcm = lcm_vec(input[::, 0], input[::, 1])
+    Alcm = lcm_vec(_input[::, 0], _input[::, 1])
     for i in range(Sz[1]-2):
-        Alcm = lcm_vec(Alcm, input[::, i+2])
+        Alcm = lcm_vec(Alcm, _input[::, i+2])
 
     if tmp != 1:
         Alcm.shape = (len(Alcm), 1)
 
     return np.absolute(Alcm)
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 
 
 def int_check(input, precis=6):
@@ -194,18 +199,18 @@ def int_check(input, precis=6):
     Parameters
     ----------
     input : numpy array or list
-        Input n-D array of floats.
+    Input n-D array of floats
 
     precis : Integer
-        Default = 6.
-        A value that specifies the precision to which the number is an
-        integer. **precis = 6** implies a precision of :math:`10^{-6}`.
+    Default = 6
+    A value that specifies the precision to which the number is an
+    integer. *precis = 6* implies a precision of :math:`10^{-6}`.
 
     Returns
     -------
     cond: Boolean
-        **True** if the element is an integer to a certain precision,
-        **False** otherwise
+    **True** if the element is an integer to a certain precision,
+    **False** otherwise
     """
 
     var = np.array(input)
@@ -213,7 +218,7 @@ def int_check(input, precis=6):
     t1 = abs(var)
     cond = (abs(t1 - np.around(t1)) < tval)
     return cond
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 
 
 def rat(input, tol=1e-06):
@@ -226,15 +231,15 @@ def rat(input, tol=1e-06):
     input : numpy array or list of real numbers
 
     tol : floating point tolerance value
-        Default = 1e-06
+    Default = 1e-06
 
     Returns
     -------
     N, D: Integer numpy arrays
-        N and D contain the numerators (p) and denominators (q) of the
-        rational approximations
+    N and D contain the numerators (p) and denominators (q) of the
+    rational approximations
 
-    Notes:
+    Notes
     --------
     """
     input1 = np.array(input)
@@ -246,8 +251,8 @@ def rat(input, tol=1e-06):
         input1 = np.reshape(input1, (1, 1))
 
     Sz = input1.shape
-    N = np.zeros((Sz[0], Sz[1]), dtype='int64')
-    D = np.zeros((Sz[0], Sz[1]), dtype='int64')
+    N = np.zeros((Sz[0], Sz[1]), dtype=np.int)
+    D = np.zeros((Sz[0], Sz[1]), dtype=np.int)
     nDec = int(1/tol)
     for i in range(Sz[0]):
         for j in range(Sz[1]):
@@ -256,7 +261,7 @@ def rat(input, tol=1e-06):
             D[i, j] = (Fraction.from_float(input1[i, j]).
                        limit_denominator(nDec).denominator)
     return N, D
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 
 
 def int_finder(input_v, tol=1e-6, order='all', tol1=1e-6):
@@ -270,10 +275,10 @@ def int_finder(input_v, tol=1e-6, order='all', tol1=1e-6):
     input1 : numpy array or list of real numbers
 
     tol : floating point tolerance value
-        Default = 1e-06
+    Default = 1e-06
 
     order : {'rows', 'columns', 'col', 'all'}
-        Defualt = 'all'
+    Defualt = 'all'
 
     tol1:
 
@@ -301,7 +306,7 @@ def int_finder(input_v, tol=1e-6, order='all', tol1=1e-6):
     if int_check(input1, 15).all():
         input1 = np.around(input1)
         # Divide by LCM (rows, cols, all) <--- To Do
-        tmult = gcd_array(input1.astype(dtype='int64'), order)
+        tmult = gcd_array(input1.astype(int), order)
         if (order == 'all'):
             input1 = input1 / tmult
         elif (order == 'rows'):
@@ -342,8 +347,8 @@ def int_finder(input_v, tol=1e-6, order='all', tol1=1e-6):
                 Switch = 1
 
         if (abs(input1) < tol).all():
-            excep1 = 'All the input components cannot' \
-                     + 'be smaller than tolerance.'
+            excep1 = 'All the input components ({}) cannot'.format(abs(input1)) \
+                     + ' be smaller than the tolerance ({}).'.format(tol)
             raise Exception(excep1)
 
         tmp = np.array((abs(input1) > tol1))
@@ -357,6 +362,7 @@ def int_finder(input_v, tol=1e-6, order='all', tol1=1e-6):
         N, D = rat(input1, tol)
         N[~tmp] = 0 # <---- added
         D[~tmp] = 1 # <---- added
+        
         lcm_rows = lcm_array(D, 'rows')
         lcm_mat = np.tile(lcm_rows, (1, input1.shape[1]))
         Rounded = (N * lcm_mat) / D
@@ -376,7 +382,7 @@ def int_finder(input_v, tol=1e-6, order='all', tol1=1e-6):
             output_v = np.reshape(output_v, (np.size(output_v), ))
 
         return output_v
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 
 
 def int_mult(input, tol=1e-06):
@@ -390,15 +396,15 @@ def int_mult(input, tol=1e-06):
     input : numpy array or list of real numbers
 
     tol : floating point tolerance value
-        Default = 1e-06
+    Default = 1e-06
 
     Returns
     -------
     N: numpy float array
-        An array of integers obtained by scaling input
+    An array of integers obtained by scaling input
 
     Int_Mat: numpy float array
-        An array of integers obtained by scaling input
+    An array of integers obtained by scaling input
 
     See Also
     --------
@@ -408,7 +414,6 @@ def int_mult(input, tol=1e-06):
     --------
     **Change this function to accept rows and columns as input**
     """
-
     T = np.array(input)
     IntMat = int_finder(T, tol)
     t_ind = np.where(abs(IntMat) == abs(IntMat).max())
@@ -416,4 +421,4 @@ def int_mult(input, tol=1e-06):
     t_ind_y = t_ind[1][0]
     N = IntMat[t_ind_x, t_ind_y] /input[t_ind_x, t_ind_y]
     return N, IntMat
-# -----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------

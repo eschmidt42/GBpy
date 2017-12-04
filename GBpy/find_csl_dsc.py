@@ -1,18 +1,12 @@
 # Authors: Arash Dehghan Banadaki <adehgha@ncsu.edu>, Srikanth Patala <spatala@ncsu.edu>
-# Copyright (c) 2015,  Arash Dehghan Banadaki and Srikanth Patala.
+# Copyright (c) 2014,  Arash Dehghan Banadaki and Srikanth Patala.
 # License: GNU-GPL Style.
-# How to cite GBpy:
-# Banadaki, A. D. & Patala, S. "An efficient algorithm for computing the primitive bases of a general lattice plane",
-# Journal of Applied Crystallography 48, 585-588 (2015). doi:10.1107/S1600576715004446
-
-
+from __future__ import print_function, absolute_import
 import numpy as np
-import integer_manipulations as int_man
-from tools import lll_reduction
-from tools import smith_nf
-from tools import message_display
-import bp_basis as bpb
-# -----------------------------------------------------------------------------------------------------------
+import GBpy.integer_manipulations as int_man
+from GBpy.tools import lll_reduction
+from GBpy.tools import smith_nf
+from GBpy.tools import message_display
 
 
 def sigma_calc(t_g1tog2_g1):
@@ -34,7 +28,6 @@ def sigma_calc(t_g1tog2_g1):
     Sigma22 = int_man.lcm_array(d2[:])
     Sigma = np.array([Sigma21, Sigma22]).max()
     return Sigma
-# -----------------------------------------------------------------------------------------------------------
 
 
 def reciprocal_mat(l_g_go):
@@ -45,21 +38,24 @@ def reciprocal_mat(l_g_go):
     Parameters
     ----------------
     l_g_go: numpy array
-        The primitive basis vectors b1x, b1y, b1z
+    The primitive basis vectors b1x, b1y, b1z
 
     Returns
     -----------
     rl_g_go: numpy array
-        The primitve reciprocal basis vectors
+    The primitve reciprocal basis vectors
     """
+    import GBpy.lattice as lat
     InMat = np.array(l_g_go)
-
+    
+    if isinstance(l_g_go, lat.Lattice):
+        InMat = np.array(l_g_go.l_g_go,dtype=np.float64)
+    
     L3 = np.cross(InMat[:, 0], InMat[:, 1]) / np.linalg.det(InMat)
     L1 = np.cross(InMat[:, 1], InMat[:, 2]) / np.linalg.det(InMat)
     L2 = np.cross(InMat[:, 2], InMat[:, 0]) / np.linalg.det(InMat)
     rl_g_go = np.vstack((L1, L2, L3)).T
     return rl_g_go
-# -----------------------------------------------------------------------------------------------------------
 
 
 def csl_elem_div_thm_l1(T0, l_g1n_g1):
@@ -72,15 +68,15 @@ def csl_elem_div_thm_l1(T0, l_g1n_g1):
     Parameters
     ---------------
     T0: numpy array
-        The transformation matrix in G1n reference frame
+    The transformation matrix in G1n reference frame
 
     l_g1n_g1: numpy array
-        The 'new' basis vectors of g1 lattice (g1n) in g1 reference frame
+    The 'new' basis vectors of g1 lattice (g1n) in g1 reference frame
 
     Returns
     ------------
     l_csl_g1: numpy array
-        The CSL basis vectors in g1 reference frame
+    The CSL basis vectors in g1 reference frame
     """
     T0 = np.array(T0)
     L1 = np.array(l_g1n_g1)
@@ -108,15 +104,15 @@ def csl_elem_div_thm_l2(t0, l_g2n_g2):
     Parameters
     ---------------
     T0: numpy array
-        The transformation matrix in G1n reference frame
+    The transformation matrix in G1n reference frame
 
     l_g2n_g2: numpy array
-        The 'new' basis vectors of g2 lattice (g2n) in g2 reference frame
+    The 'new' basis vectors of g2 lattice (g2n) in g2 reference frame
 
     Returns
     ------------
     l_csl_g2: numpy array
-        The CSL basis vectors in g2 reference frame
+    The CSL basis vectors in g2 reference frame
     """
     t0 = np.array(t0)
     l2 = np.array(l_g2n_g2)
@@ -143,12 +139,12 @@ def csl_finder_smith(r_g1tog2_g1):
     Parameters
     ----------------
     r_g1tog2_g1: numpy array
-        The 3x3 transformation matrix in g1 reference frame
+    The 3x3 transformation matrix in g1 reference frame
 
     Returns
     -----------
     l_csl_g1: numpy array
-        3 x 3 matrix with the csl basis vectors as columns
+    3 x 3 matrix with the csl basis vectors as columns
 
     Notes
     ---------
@@ -184,8 +180,7 @@ def csl_finder_smith(r_g1tog2_g1):
         raise Exception('l_csl_g1 is not defined in L_G1_G1 axis')
 
     # Reduced CSL bases using the LLL algorithm
-    # Actually don't reduce yet because the matrix is in "g1" reference frame!
-    # l_csl_g1 = lll_reduction((l_csl_g1))
+    l_csl_g1 = lll_reduction((l_csl_g1))
     return l_csl_g1
 # -----------------------------------------------------------------------------------------------------------
 
@@ -210,7 +205,7 @@ def check_csl_finder_smith(r_g1tog2_g1, Sigma, L_G1_GO1, L_CSL_G1):
     L_CSL_GO1 = np.dot(L_G1_GO1, L_CSL_G1)
     L_G2_GO1 = np.dot(R_G1ToG2_GO1, L_G1_GO1)
 
-    print '*** CSL checks ***'
+    print('*** CSL checks ***')
     # -----Check-1: L_CSL_GO1 is defined in the L_G1_GO1 lattice
     CheckBase1 = np.dot(L_GO1_G1, L_CSL_GO1)
     Precis = 10
@@ -227,7 +222,6 @@ def check_csl_finder_smith(r_g1tog2_g1, Sigma, L_G1_GO1, L_CSL_G1):
     Disp_str = ('V(CSL_GO1)/V(G1_GO1) = Sigma =  ' + "%0.0f"
                 % (np.linalg.det(L_CSL_GO1) / np.linalg.det(L_G1_GO1)))
     message_display(CheckBase3, 3, Disp_str, Precis)
-# -----------------------------------------------------------------------------------------------------------
 
 
 def dsc_finder(L_G2_G1, L_G1_GO1):
@@ -241,16 +235,16 @@ def dsc_finder(L_G2_G1, L_G1_GO1):
     Parameters
     ----------------
     l_g2_g1: numpy array
-        transformation matrix (r_g1tog2_g1)
+    transformation matrix (r_g1tog2_g1)
 
     l_g1_go1: numpy array
-        basis vectors (as columns) of the underlying lattice expressed in the
-        orthogonal 'go' reference frame
+    basis vectors (as columns) of the underlying lattice expressed in the
+    orthogonal 'go' reference frame
 
     Returns
     ------------
     l_dsc_g1: numpy array
-        The dsc lattice basis vectors (as columns) expressed in the g1 reference
+    The dsc lattice basis vectors (as columns) expressed in the g1 reference
 
     Notes
     ---------
@@ -285,17 +279,16 @@ def dsc_finder(L_G2_G1, L_G1_GO1):
     # % % Reciprocal of the CSL of the reciprocal lattices
     L_DSC_GO1 = reciprocal_mat(L_rCSL_GO1)
     L_DSC_G1 = np.dot(L_GO1_G1, L_DSC_GO1)
-    # L_DSC_G1 = bpb.reduce_go1_mat(L_DSC_G1, L_G1_GO1)
 
-    # # % % Reduction of the DSC lattice in G1 reference frame
-    # DSC_Int = int_man.int_finder(L_DSC_G1, 1e-06)
-    # t_ind = np.where(abs(DSC_Int) == abs(DSC_Int).max())
-    # t_ind_1 = t_ind[0][0]
-    # t_ind_2 = t_ind[1][0]
-    # Mult1 = DSC_Int[t_ind_1, t_ind_2] / L_DSC_G1[t_ind_1, t_ind_2]
-    # DSC_Reduced = lll_reduction(DSC_Int)
-    # DSC_Reduced = DSC_Reduced / Mult1
-    # L_DSC_G1 = DSC_Reduced
+    # % % Reduction of the DSC lattice in G1 reference frame
+    DSC_Int = int_man.int_finder(L_DSC_G1, 1e-06)
+    t_ind = np.where(abs(DSC_Int) == abs(DSC_Int).max())
+    t_ind_1 = t_ind[0][0]
+    t_ind_2 = t_ind[1][0]
+    Mult1 = DSC_Int[t_ind_1, t_ind_2] / L_DSC_G1[t_ind_1, t_ind_2]
+    DSC_Reduced = lll_reduction(DSC_Int)
+    DSC_Reduced = DSC_Reduced / Mult1
+    L_DSC_G1 = DSC_Reduced
 
     # % % % Check this assertion: L_DSC_G1 = [Int_Matrix]/Sigma
     if int_man.int_check(Sigma_star*L_DSC_G1, 10).all():
@@ -322,7 +315,7 @@ def check_dsc_finder(R_G1ToG2_G1, Sigma, L_G1_GO1, L_DSC_G1, L_CSL_G1):
     L_CSL_GO1 = np.dot(L_G1_GO1, L_CSL_G1)
     L_G2_GO1 = np.dot(R_G1ToG2_GO1, L_G1_GO1)
 
-    print '*** DSC checks ***'
+    print('*** DSC checks ***')
     # -----Check-1:
     Check1 = np.dot(np.linalg.inv(L_DSC_GO1), L_G1_GO1)
     Precis = 10
@@ -345,7 +338,6 @@ def check_dsc_finder(R_G1ToG2_G1, Sigma, L_G1_GO1, L_DSC_G1, L_CSL_G1):
                 % (np.linalg.det(L_G1_GO1) / np.linalg.det(L_DSC_GO1)))
     Precis = 6
     message_display(CheckBase4, 4, Disp_str, Precis)
-# -----------------------------------------------------------------------------------------------------------
 
 
 def find_csl_dsc(L_G1_GO1, R_G1ToG2_G1):
@@ -356,44 +348,24 @@ def find_csl_dsc(L_G1_GO1, R_G1ToG2_G1):
     Parameters
     -----------------
     L_G1_GO1: numpy array
-        The three basis vectors for the primitive unit cell
-        (as columns) are given with respect to the GO1 reference
-        frame.
+    The three basis vectors for the primitive unit cell
+    (as columns) are given with respect to the GO1 reference
+    frame.
 
-    R_G1ToG2_G1: 3X3 numpy array
-        The rotation matrix defining the
-        transformation in 'G1' reference frame. The subscript 'G1' refers
-        to the primitive unit cell of G lattice.
+    R_G1ToG2_G1: 3X3 numpy array The rotation matrix defining the
+    transformation in 'G1' reference frame. The subscript 'G1' refers
+    to the primitive unit cell of G lattice.
 
     Returns
     l_csl_g1, l_dsc_g1: numpy arrays
-        The basis vectors of csl and dsc lattices in the g1 reference frame
+    The basis vectors of csl and dsc lattices in the g1 reference frame
     """
 
     R_G1ToG2_G1 = np.array(R_G1ToG2_G1)
     L_G1_GO1 = np.array(L_G1_GO1)
 
     L_CSL_G1 = csl_finder_smith(R_G1ToG2_G1)
-    print np.dot(np.linalg.inv(R_G1ToG2_G1), L_CSL_G1)
-
-    L_CSL_G1 = bpb.reduce_go1_mat(L_CSL_G1, L_G1_GO1)
-
-    Sigma, _ =  int_man.int_mult(R_G1ToG2_G1)
-    check_csl_finder_smith(R_G1ToG2_G1, Sigma, L_G1_GO1, L_CSL_G1)
-
     # Finding the DSC lattice from the obtained CSL.
     L_DSC_G1 = dsc_finder(R_G1ToG2_G1, L_G1_GO1)
 
-    L_CSL_G1 = make_right_handed(L_CSL_G1, L_G1_GO1)
-    L_DSC_G1 = make_right_handed(L_DSC_G1, L_G1_GO1)
-
     return L_CSL_G1, L_DSC_G1
-# -----------------------------------------------------------------------------------------------------------
-
-def make_right_handed(l_csl_p1, l_p_po):
-    if (np.linalg.det(l_csl_p1) < 0):
-        t1_array = l_csl_p1.copy()
-        t1_array[:, 0] = l_csl_p1[:, 1]
-        t1_array[:, 1] = l_csl_p1[:, 0]
-        l_csl_p1 = t1_array.copy()
-    return l_csl_p1

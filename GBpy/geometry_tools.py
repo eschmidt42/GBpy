@@ -1,16 +1,8 @@
 # Authors: Arash Dehghan Banadaki <adehgha@ncsu.edu>, Srikanth Patala <spatala@ncsu.edu>
-# Copyright (c) 2015,  Arash Dehghan Banadaki and Srikanth Patala.
+# Copyright (c) 2014,  Arash Dehghan Banadaki and Srikanth Patala.
 # License: GNU-GPL Style.
-# How to cite GBpy:
-# Banadaki, A. D. & Patala, S. "An efficient algorithm for computing the primitive bases of a general lattice plane",
-# Journal of Applied Crystallography 48, 585-588 (2015). doi:10.1107/S1600576715004446
-
-
+from __future__ import print_function, absolute_import
 import numpy as np
-import quaternion as quat
-import vector3d as vec3d
-# -----------------------------------------------------------------------------------------------------------
-
 
 def isnumeric(obj):
     try:
@@ -18,9 +10,9 @@ def isnumeric(obj):
         return True
     except TypeError:
         return False
-# -----------------------------------------------------------------------------------------------------------
 
 
+import GBpy.vector3d as vec3d
 def sph2vec(theta, rho, *args):
     """
     Spherical to Cartesian Coordinates
@@ -31,17 +23,19 @@ def sph2vec(theta, rho, *args):
     v = sph2vec(theta,rho)
     v = sph2vec(theta,rho,r)
     [x,y,z] = sph2vec(theta,rho,r)
+    #
 
-    Parameters
-    -----------------
-    theta: spherical coordinates in radians
-    rho: spherical coordinates in radians
-    r: radius
+    ## Input
+    theta, rho - spherical coordinates in radians
+    r          - radius
+    nargout    - Type of output arguments
+                   1 - vector3d
+                   2 - x,y,z
+    #
 
-    Returns
-    -----------------
-    v: vector3d
-    x,y,z: double
+    ## Output
+    v          - vector3d
+    x,y,z      - double
     """
 
     nargin = len(args)
@@ -78,9 +72,8 @@ def sph2vec(theta, rho, *args):
         return vec3d.vector3d(x, y, z)
     elif nargout == 'Array':
         return np.column_stack((x, y, z))
-# -----------------------------------------------------------------------------------------------------------
 
 
+from GBpy import quaternion as quat
 def idquaternion():
-    return quat.Quaternion(1, 0, 0, 0, 1)
-# -----------------------------------------------------------------------------------------------------------
+    return quat.quaternion(1, 0, 0, 0)
